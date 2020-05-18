@@ -1,6 +1,7 @@
 from tkinter import *
 from re import *
 from itertools import combinations
+import random
 
 root = Tk()
 root.geometry('600x600')
@@ -70,17 +71,18 @@ def result():
             draw_win_line(sorted(list(x)))
             print('X Won!')
             board.unbind('<1>')
+            return True
     o_combinations = create_combinations(data_o_table)
     for o in o_combinations:
         if sorted(list(o)) in WIN_POSSIBILITIES:
             print('O Won!')
             draw_win_line(sorted(list(o)))
             board.unbind('<1>')
+            return False
+    return False
 
 
-def draw_shape(event):
-    x = event.x
-    y = event.y
+def draw_shape(x, y, color='black'):
     global counter
 
     for i in range(0, 3):
@@ -95,13 +97,52 @@ def draw_shape(event):
                                           fill='darkred')
                     else:
                         board.create_oval((j * 150) + 20, (i * 150) + 20, (j * 150) + 130, (i * 150) + 130,
-                                          fill='black', width=10, outline='darkblue',
+                                          fill='black', width=10, outline=color,
                                           tags=('O', 'x{}y{}'.format(i, j)))
 
                     counter += 1
+
+
+def change_objects_color(objects, color='red', outline=None):
+    if isinstance(objects, (tuple, list)):
+        for item in objects:
+            if outline:
+                print()
+                board.itemconfig(item, outline=outline)
+            else:
+                board.itemconfig(item, fill=color)
+
+
+def display_oval():
+    change_objects_color(board.find_withtag('O'), 'black', 'darkblue')
+
+
+def two_player_game(event):
+    x = event.x
+    y = event.y
+    draw_shape(x, y, 'darkblue')
     result()
 
 
-board.bind('<1>', draw_shape)
+def one_player_game(event):
+    x = event.x
+    y = event.y
+    draw_shape(x, y)
+    if result():
+        board.unbind('<3>')
+        return
+    condition = len(board.find_withtag('O')) + 1
+    while condition != len(board.find_withtag('O')):
+        xc = random.randint(1, 4) * 144
+        yc = random.randint(1, 4) * 144
+        draw_shape(xc, yc)
+    board.after(1000, display_oval)
+    if result():
+        board.unbind('<3>')
+        return
+
+
+board.bind('<1>', two_player_game)
+board.bind('<3>', one_player_game)
 
 root.mainloop()
