@@ -2,6 +2,7 @@ from tkinter import *
 from re import *
 from itertools import combinations
 import random
+import time
 
 root = Tk()
 root.geometry('600x600')
@@ -21,6 +22,18 @@ WIN_POSSIBILITIES = (
     ['x0y0', 'x0y1', 'x0y2'], ['x1y0', 'x1y1', 'x1y2'], ['x2y0', 'x2y1', 'x2y2'], ['x0y0', 'x1y0', 'x2y0'],
     ['x0y1', 'x1y1', 'x2y1'], ['x0y2', 'x1y2', 'x2y2'], ['x0y0', 'x1y1', 'x2y2'], ['x0y2', 'x1y1', 'x2y0']
 )
+
+game_history = []
+
+FIELDS_VOCABULARY = {
+    'x0y0': 1, 'x0y1': 2, 'x0y2': 3, 'x1y0': 4, 'x1y1': 5, 'x1y2': 6, 'x2y0': 7, 'x2y1': 8, 'x2y2': 9,
+}
+
+WIN_POSSIBILITIES_VOCABULARY = ([FIELDS_VOCABULARY[wp[0]], FIELDS_VOCABULARY[wp[1]], FIELDS_VOCABULARY[wp[2]]] for wp in
+                                WIN_POSSIBILITIES)
+
+for z in WIN_POSSIBILITIES_VOCABULARY:
+    print(z)
 
 
 def draw_win_line(win_condition):
@@ -78,7 +91,7 @@ def result():
             print('O Won!')
             draw_win_line(sorted(list(o)))
             board.unbind('<1>')
-            return False
+            return True
     return False
 
 
@@ -91,11 +104,13 @@ def draw_shape(x, y, color='black'):
                 state = board.find_withtag('x{}y{}'.format(i, j))
                 if not state:
                     if counter % 2 == 0:
+                        game_history.append(f'X* x{i}y{j}')
                         board.create_line((j * 150) + 20, (i * 150) + 20, (j * 150) + 130, (i * 150) + 130, width=10,
                                           fill='darkred', tags=('X', 'x{}y{}'.format(i, j)))
                         board.create_line((j * 150) + 20, (i * 150) + 130, (j * 150) + 130, (i * 150) + 20, width=10,
                                           fill='darkred')
                     else:
+                        game_history.append(f'O* x{i}y{j}')
                         board.create_oval((j * 150) + 20, (i * 150) + 20, (j * 150) + 130, (i * 150) + 130,
                                           fill='black', width=10, outline=color,
                                           tags=('O', 'x{}y{}'.format(i, j)))
@@ -117,11 +132,23 @@ def display_oval():
     change_objects_color(board.find_withtag('O'), 'black', 'darkblue')
 
 
+def create_oval():
+    condition = len(board.find_withtag('O')) + 1
+    while condition != len(board.find_withtag('O')):
+        xc = random.randint(1, 4) * 144
+        yc = random.randint(1, 4) * 144
+        draw_shape(xc, yc, 'darkblue')
+    result()
+    if result():
+        board.unbind('<3>')
+
+
 def two_player_game(event):
     x = event.x
     y = event.y
     draw_shape(x, y, 'darkblue')
-    result()
+    if result():
+        print(game_history)
 
 
 def one_player_game(event):
@@ -131,18 +158,41 @@ def one_player_game(event):
     if result():
         board.unbind('<3>')
         return
+    board.after(1000, create_oval)
+    if result():
+        board.unbind('<3>')
+        return
+    print(len(board.find_withtag('X')) + len(board.find_withtag('O')))
+
+
+def smart_computer():
+    x_list = []
+    for x in board.find_withtag('X'):
+        x_tags = board.itemcget(x, 'tags')
+        x_list.append(FIELDS_VOCABULARY[x_tags.split()[1]])
+    print(x_list)
     condition = len(board.find_withtag('O')) + 1
     while condition != len(board.find_withtag('O')):
         xc = random.randint(1, 4) * 144
         yc = random.randint(1, 4) * 144
-        draw_shape(xc, yc)
-    board.after(1000, display_oval)
+        draw_shape(xc, yc, 'darkblue')
+    result()
+    if result():
+        board.unbind('<3>')
+
+
+def smart_computer_game(event):
+    x = event.x
+    y = event.y
+    draw_shape(x, y)
     if result():
         board.unbind('<3>')
         return
+    board.after(1000, smart_computer)
 
 
 board.bind('<1>', two_player_game)
-board.bind('<3>', one_player_game)
+board.bind('<2>', one_player_game)
+board.bind('<3>', smart_computer_game)
 
 root.mainloop()
