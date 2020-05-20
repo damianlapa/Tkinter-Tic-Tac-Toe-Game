@@ -29,11 +29,12 @@ FIELDS_VOCABULARY = {
     'x0y0': 1, 'x0y1': 2, 'x0y2': 3, 'x1y0': 4, 'x1y1': 5, 'x1y2': 6, 'x2y0': 7, 'x2y1': 8, 'x2y2': 9,
 }
 
-WIN_POSSIBILITIES_VOCABULARY = ([FIELDS_VOCABULARY[wp[0]], FIELDS_VOCABULARY[wp[1]], FIELDS_VOCABULARY[wp[2]]] for wp in
-                                WIN_POSSIBILITIES)
+WIN_POSSIBILITIES_FIELDS = [[FIELDS_VOCABULARY[wp[0]], FIELDS_VOCABULARY[wp[1]], FIELDS_VOCABULARY[wp[2]]] for wp in
+                            WIN_POSSIBILITIES]
 
-for z in WIN_POSSIBILITIES_VOCABULARY:
-    print(z)
+X_Y_COORDS = {
+    1: (1, 1), 2: (2, 1), 3: (3, 1), 4: (1, 2), 5: (2, 2), 6: (3, 2), 7: (1, 3), 8: (2, 3), 9: (3, 3)
+}
 
 
 def draw_win_line(win_condition):
@@ -165,16 +166,36 @@ def one_player_game(event):
     print(len(board.find_withtag('X')) + len(board.find_withtag('O')))
 
 
-def smart_computer():
+def preventing_x_win():
     x_list = []
+    o_list = []
     for x in board.find_withtag('X'):
         x_tags = board.itemcget(x, 'tags')
         x_list.append(FIELDS_VOCABULARY[x_tags.split()[1]])
-    print(x_list)
+    for o in board.find_withtag('O'):
+        o_tags = board.itemcget(o, 'tags')
+        o_list.append(FIELDS_VOCABULARY[o_tags.split()[1]])
     condition = len(board.find_withtag('O')) + 1
     while condition != len(board.find_withtag('O')):
+
         xc = random.randint(1, 4) * 144
         yc = random.randint(1, 4) * 144
+        if x_list == [5]:
+            i = random.choice((1, 3, 7, 9))
+            xc = X_Y_COORDS[i][0] * 111
+            yc = X_Y_COORDS[i][1] * 111
+        elif len(x_list) == 1:
+            xc = X_Y_COORDS[5][0] * 111
+            yc = X_Y_COORDS[5][1] * 111
+        for possibility in WIN_POSSIBILITIES_FIELDS:
+            for i in range(0, 3):
+                if possibility[i - 2] in o_list and possibility[i - 1] in o_list and possibility[i] not in x_list:
+                    xc = X_Y_COORDS[possibility[i]][0] * 111
+                    yc = X_Y_COORDS[possibility[i]][1] * 111
+                elif possibility[i - 2] in x_list and possibility[i - 1] in x_list and possibility[i] not in o_list:
+                    xc = X_Y_COORDS[possibility[i]][0] * 111
+                    yc = X_Y_COORDS[possibility[i]][1] * 111
+
         draw_shape(xc, yc, 'darkblue')
     result()
     if result():
@@ -188,7 +209,7 @@ def smart_computer_game(event):
     if result():
         board.unbind('<3>')
         return
-    board.after(1000, smart_computer)
+    board.after(1000, preventing_x_win)
 
 
 board.bind('<1>', two_player_game)
