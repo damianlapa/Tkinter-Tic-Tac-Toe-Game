@@ -224,8 +224,22 @@ def first_screen_display():
     board.delete('win')
 
     def tpg():
-        main_menu.place_forget()
-        board.bind('<1>', two_player_game)
+
+        side = Label(main_menu, text='Pick a side:', font='Courier 22 bold', bg='grey', fg='#E0F4F7')
+        side.place(x=300, y=300, anchor=CENTER)
+        side_o = Canvas(main_menu, width=100, height=100, bg='black')
+        side_o.place(x=190, y=325)
+        side_o.create_oval(10, 10, 90, 90, fill='black', width=7, outline='darkblue')
+        side_x = Canvas(main_menu, width=100, height=100, bg='black')
+        side_x.place(x=310, y=325)
+        side_x.create_line(10, 10, 90, 90, width=5, fill='darkred')
+        side_x.create_line(10, 90, 90, 10, width=5, fill='darkred')
+
+        def quitr(event):
+            root.quit()
+
+        side_x.bind('<1>', quitr)
+
 
     def opg():
         main_menu.place_forget()
