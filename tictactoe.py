@@ -39,21 +39,21 @@ X_Y_COORDS = {
 
 def draw_win_line(win_condition):
     if win_condition == WIN_POSSIBILITIES[0]:
-        board.create_line(10, 75, 440, 75, width=10, fill='yellow')
+        board.create_line(10, 75, 440, 75, width=10, fill='yellow', tag='win')
     if win_condition == WIN_POSSIBILITIES[1]:
-        board.create_line(10, 225, 440, 225, width=10, fill='yellow')
+        board.create_line(10, 225, 440, 225, width=10, fill='yellow', tag='win')
     if win_condition == WIN_POSSIBILITIES[2]:
-        board.create_line(10, 375, 440, 375, width=10, fill='yellow')
+        board.create_line(10, 375, 440, 375, width=10, fill='yellow', tag='win')
     if win_condition == WIN_POSSIBILITIES[3]:
-        board.create_line(75, 10, 75, 440, width=10, fill='yellow')
+        board.create_line(75, 10, 75, 440, width=10, fill='yellow', tag='win')
     if win_condition == WIN_POSSIBILITIES[4]:
-        board.create_line(225, 10, 225, 440, width=10, fill='yellow')
+        board.create_line(225, 10, 225, 440, width=10, fill='yellow', tag='win')
     if win_condition == WIN_POSSIBILITIES[5]:
-        board.create_line(375, 10, 375, 440, width=10, fill='yellow')
+        board.create_line(375, 10, 375, 440, width=10, fill='yellow', tag='win')
     if win_condition == WIN_POSSIBILITIES[6]:
-        board.create_line(10, 10, 440, 440, width=10, fill='yellow')
+        board.create_line(10, 10, 440, 440, width=10, fill='yellow', tag='win')
     if win_condition == WIN_POSSIBILITIES[7]:
-        board.create_line(10, 440, 440, 10, width=10, fill='yellow')
+        board.create_line(10, 440, 440, 10, width=10, fill='yellow', tag='win')
 
 
 def create_combinations(object_to_handle):
@@ -85,6 +85,7 @@ def result():
             draw_win_line(sorted(list(x)))
             print('X Won!')
             board.unbind('<1>')
+            board.after(2000, first_screen_display)
             return True
     o_combinations = create_combinations(data_o_table)
     for o in o_combinations:
@@ -92,7 +93,14 @@ def result():
             print('O Won!')
             draw_win_line(sorted(list(o)))
             board.unbind('<1>')
+            board.after(2000, first_screen_display)
             return True
+
+    if (len(board.find_withtag('X')) + len(board.find_withtag('O'))) == 9:
+        global counter
+        counter = 0
+        board.after(2000, first_screen_display)
+        return True
     return False
 
 
@@ -109,7 +117,7 @@ def draw_shape(x, y, color='black'):
                         board.create_line((j * 150) + 20, (i * 150) + 20, (j * 150) + 130, (i * 150) + 130, width=10,
                                           fill='darkred', tags=('X', 'x{}y{}'.format(i, j)))
                         board.create_line((j * 150) + 20, (i * 150) + 130, (j * 150) + 130, (i * 150) + 20, width=10,
-                                          fill='darkred')
+                                          fill='darkred', tag='/')
                     else:
                         game_history.append(f'O* x{i}y{j}')
                         board.create_oval((j * 150) + 20, (i * 150) + 20, (j * 150) + 130, (i * 150) + 130,
@@ -141,7 +149,8 @@ def create_oval():
         draw_shape(xc, yc, 'darkblue')
     result()
     if result():
-        board.unbind('<3>')
+        board.unbind('<1>')
+    board.bind('<1>', smart_computer_game)
 
 
 def two_player_game(event):
@@ -156,12 +165,13 @@ def one_player_game(event):
     x = event.x
     y = event.y
     draw_shape(x, y)
+    board.unbind('<1>')
     if result():
-        board.unbind('<3>')
+        board.unbind('<1>')
         return
     board.after(1000, create_oval)
     if result():
-        board.unbind('<3>')
+        board.unbind('<1>')
         return
     print(len(board.find_withtag('X')) + len(board.find_withtag('O')))
 
@@ -187,33 +197,62 @@ def preventing_x_win():
         elif len(x_list) == 1:
             xc = X_Y_COORDS[5][0] * 111
             yc = X_Y_COORDS[5][1] * 111
+        oxc = None
+        oyc = None
         for possibility in WIN_POSSIBILITIES_FIELDS:
             for i in range(0, 3):
                 if possibility[i - 2] in o_list and possibility[i - 1] in o_list and possibility[i] not in x_list:
-                    xc = X_Y_COORDS[possibility[i]][0] * 111
-                    yc = X_Y_COORDS[possibility[i]][1] * 111
+                    oxc = X_Y_COORDS[possibility[i]][0] * 111
+                    oyc = X_Y_COORDS[possibility[i]][1] * 111
                 elif possibility[i - 2] in x_list and possibility[i - 1] in x_list and possibility[i] not in o_list:
                     xc = X_Y_COORDS[possibility[i]][0] * 111
                     yc = X_Y_COORDS[possibility[i]][1] * 111
-
-        draw_shape(xc, yc, 'darkblue')
-    result()
+        if oxc:
+            draw_shape(oxc, oyc, 'gold')
+        else:
+            draw_shape(xc, yc, 'darkblue')
     if result():
-        board.unbind('<3>')
+        board.unbind('<1>')
+
+    board.bind('<1>', smart_computer_game)
+
+
+def first_screen_display():
+    board.delete('X')
+    board.delete('O')
+    board.delete('/')
+    board.delete('win')
+
+    def tpg():
+        main_menu.place_forget()
+        board.bind('<1>', two_player_game)
+
+    def opg():
+        main_menu.place_forget()
+        board.bind('<1>', smart_computer_game)
+
+    main_menu = Frame(root, width=600, height=600, bg='grey')
+    main_menu.place(x=0, y=0)
+    title = Label(main_menu, text='tic tac toe', font='Courier 44 bold', bg='grey', fg='white')
+    title.place(x=110, y=50)
+    game_select = Frame(main_menu, width=100, height=100, bg='grey')
+    game_select.place(x=300, y=200, anchor=CENTER)
+    one_player = Button(game_select, text='1 PLAYER', command=opg).pack()
+    two_players = Button(game_select, text='2 PLAYERS', command=tpg).pack()
 
 
 def smart_computer_game(event):
     x = event.x
     y = event.y
     draw_shape(x, y)
+
+    board.unbind('<1>')
     if result():
-        board.unbind('<3>')
+        board.unbind('<1>')
         return
     board.after(1000, preventing_x_win)
 
 
-board.bind('<1>', two_player_game)
-board.bind('<2>', one_player_game)
-board.bind('<3>', smart_computer_game)
+first_screen_display()
 
 root.mainloop()
