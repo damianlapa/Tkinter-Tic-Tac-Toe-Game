@@ -2,7 +2,6 @@ from tkinter import *
 from re import *
 from itertools import combinations
 import random
-import time
 
 root = Tk()
 root.geometry('600x600')
@@ -157,8 +156,7 @@ def two_player_game(event):
     x = event.x
     y = event.y
     draw_shape(x, y, 'darkblue')
-    if result():
-        print(game_history)
+    result()
 
 
 def one_player_game(event):
@@ -173,7 +171,6 @@ def one_player_game(event):
     if result():
         board.unbind('<1>')
         return
-    print(len(board.find_withtag('X')) + len(board.find_withtag('O')))
 
 
 def preventing_x_win():
@@ -197,6 +194,11 @@ def preventing_x_win():
         elif len(x_list) == 1:
             xc = X_Y_COORDS[5][0] * 111
             yc = X_Y_COORDS[5][1] * 111
+        sxl = sorted(x_list)
+        if sxl == [1, 5] or sxl == [3, 5] or sxl == [5, 7] or sxl == [5, 9]:
+            i = random.choice((1, 3, 7, 9))
+            xc = X_Y_COORDS[i][0] * 111
+            yc = X_Y_COORDS[i][1] * 111
         oxc = None
         oyc = None
         for possibility in WIN_POSSIBILITIES_FIELDS:
@@ -235,10 +237,20 @@ def first_screen_display():
         side_x.create_line(10, 10, 90, 90, width=5, fill='darkred')
         side_x.create_line(10, 90, 90, 10, width=5, fill='darkred')
 
-        def quitr(event):
-            root.quit()
+        def side_x_chose(event):
+            global counter
+            counter = 0
+            main_menu.place_forget()
+            board.bind('<1>', two_player_game)
 
-        side_x.bind('<1>', quitr)
+        def side_o_chose(event):
+            global counter
+            counter = 1
+            main_menu.place_forget()
+            board.bind('<1>', two_player_game)
+
+        side_x.bind('<1>', side_x_chose)
+        side_o.bind('<1>', side_o_chose)
 
 
     def opg():
